@@ -1,4 +1,4 @@
-# Flhc Trade Calculator - 日内交易统计分析
+# FLHC Trade Calculator - 日内交易统计分析
 
 一个简洁美观的日内交易数据统计分析工具，支持数据录入、统计分析和报告导出。
 

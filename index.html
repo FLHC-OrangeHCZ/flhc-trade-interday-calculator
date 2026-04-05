@@ -178,6 +178,101 @@
             color: var(--text-secondary);
         }
 
+        /* 竖排输入框容器 */
+        .input-group-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-group-vertical input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group-vertical input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .input-group-vertical input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* 模式切换标签 */
+        .mode-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 12px;
+        }
+
+        .mode-tab {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .mode-tab:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .mode-tab.active {
+            background: var(--accent-color);
+            color: var(--bg-primary);
+            font-weight: 500;
+        }
+
+        .mode-panel {
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Risk/Profit 快速添加按钮 */
+        .quick-add-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .btn-profit {
+            flex: 1;
+            background: var(--profit-color);
+            color: white;
+        }
+
+        .btn-profit:hover {
+            background: #00b85c;
+            transform: translateY(-2px);
+        }
+
+        .btn-loss {
+            flex: 1;
+            background: var(--loss-color);
+            color: white;
+        }
+
+        .btn-loss:hover {
+            background: #e63946;
+            transform: translateY(-2px);
+        }
+
         /* Quick Actions */
         .quick-actions {
             display: grid;
@@ -409,14 +504,47 @@
             <div class="input-panel">
                 <div class="card">
                     <div class="card-title">数据输入</div>
-                    <div class="input-group">
-                        <input type="number" id="profitInput" placeholder="输入净盈亏金额" 
-                               onkeypress="handleKeyPress(event)">
-                        <button class="btn btn-primary" onclick="addTrade()">添加</button>
+                    
+                    <!-- 模式切换标签 -->
+                    <div class="mode-tabs">
+                        <button class="mode-tab active" data-mode="direct" onclick="switchInputMode('direct')">
+                            直接输入
+                        </button>
+                        <button class="mode-tab" data-mode="risk-profit" onclick="switchInputMode('risk-profit')">
+                            Risk/Profit
+                        </button>
                     </div>
-                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 10px;">
-                        按 Enter 快速添加，支持正负数字
-                    </p>
+
+                    <!-- 直接输入模式面板 -->
+                    <div id="directModePanel" class="mode-panel">
+                        <div class="input-group">
+                            <input type="number" id="profitInput" placeholder="输入净盈亏金额" 
+                                   onkeypress="handleKeyPress(event)">
+                            <button class="btn btn-primary" onclick="addTrade()">添加</button>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 10px;">
+                            按 Enter 快速添加，支持正负数字
+                        </p>
+                    </div>
+
+                    <!-- Risk/Profit 模式面板 -->
+                    <div id="riskProfitModePanel" class="mode-panel" style="display: none;">
+                        <div class="input-group-vertical">
+                            <input type="number" id="riskInput" placeholder="Risk（亏损）">
+                            <input type="number" id="profitInputRP" placeholder="Profit（盈利）">
+                        </div>
+                        <div class="quick-add-buttons">
+                            <button class="btn btn-profit" onclick="quickAddTrade('profit')">
+                                📈 盈利
+                            </button>
+                            <button class="btn btn-loss" onclick="quickAddTrade('loss')">
+                                📉 亏损
+                            </button>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 10px;">
+                            输入 Risk 和 Profit，点击上方按钮添加交易记录
+                        </p>
+                    </div>
                 </div>
 
                 <div class="card">
@@ -550,6 +678,38 @@
                     <span class="value" id="statAvgLossStreak">0</span>
                 </div>
             </div>
+
+            <div class="stats-section">
+                <h3>⚠️ 风险指标</h3>
+                <div class="stat-row">
+                    <span class="label">最大回撤</span>
+                    <span class="value" id="statMaxDrawdown" style="color: var(--loss-color);">¥0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="label">最大回撤率</span>
+                    <span class="value" id="statMaxDrawdownPercent">0%</span>
+                </div>
+                <div class="stat-row">
+                    <span class="label">索提诺比率</span>
+                    <span class="value" id="statSortino">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="label">盈利因子</span>
+                    <span class="value" id="statProfitFactor">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="label">恢复因子</span>
+                    <span class="value" id="statRecoveryFactor">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="label">总盈利金额</span>
+                    <span class="value" id="statTotalProfitAmount" style="color: var(--profit-color);">¥0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="label">总亏损金额</span>
+                    <span class="value" id="statTotalLossAmount" style="color: var(--loss-color);">¥0</span>
+                </div>
+            </div>
         </div>
 
         <!-- Trend Chart -->
@@ -625,6 +785,46 @@
             if (event.key === 'Enter') {
                 addTrade();
             }
+        }
+
+        // ==================== 模式切换功能 ====================
+        let currentInputMode = 'direct'; // 'direct' 或 'risk-profit'
+
+        function switchInputMode(mode) {
+            currentInputMode = mode;
+            
+            // 更新标签样式
+            document.querySelectorAll('.mode-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.mode === mode) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // 切换面板显示
+            document.getElementById('directModePanel').style.display = 
+                mode === 'direct' ? 'block' : 'none';
+            document.getElementById('riskProfitModePanel').style.display = 
+                mode === 'risk-profit' ? 'block' : 'none';
+        }
+
+        // Risk/Profit 快速添加交易
+        function quickAddTrade(type) {
+            const risk = parseFloat(document.getElementById('riskInput').value);
+            const profit = parseFloat(document.getElementById('profitInputRP').value);
+
+            if (isNaN(risk) || isNaN(profit)) {
+                alert('请输入有效的 Risk 和 Profit 值');
+                return;
+            }
+
+            const value = type === 'profit' ? profit : -risk;
+            const data = getData();
+            data.trades.push(value);
+            saveData(data);
+            
+            // 不清除输入框，方便继续添加类似交易
+            updateUI();
         }
 
         // 删除单条数据
@@ -741,6 +941,41 @@
             const avgLossStreak = lossStreaks.length > 0 
                 ? lossStreaks.reduce((sum, s) => sum + s, 0) / lossStreaks.length 
                 : 0;
+            
+            // ========== 新增风险指标 ==========
+            // 最大回撤 (Max Drawdown)
+            let cumulativeProfit = 0;
+            let maxCumulativeProfit = 0;
+            let maxDrawdown = 0;
+            let maxDrawdownPercent = 0;
+            
+            for (const trade of trades) {
+                cumulativeProfit += trade;
+                maxCumulativeProfit = Math.max(maxCumulativeProfit, cumulativeProfit);
+                const drawdown = maxCumulativeProfit - cumulativeProfit;
+                maxDrawdown = Math.max(maxDrawdown, drawdown);
+                // 计算最大回撤百分比（基于历史最高点）
+                if (maxCumulativeProfit > 0) {
+                    const drawdownPercent = (drawdown / maxCumulativeProfit) * 100;
+                    maxDrawdownPercent = Math.max(maxDrawdownPercent, drawdownPercent);
+                }
+            }
+            
+            // 索提诺比率 (Sortino Ratio) - 只考虑下行风险
+            const downsideTrades = trades.filter(t => t < avg); // 只考虑低于平均值的交易
+            const downsideVariance = downsideTrades.length > 0 
+                ? downsideTrades.reduce((sum, t) => sum + Math.pow(t - avg, 2), 0) / total 
+                : 0;
+            const downsideStdDev = Math.sqrt(downsideVariance);
+            const sortino = downsideStdDev !== 0 ? (avg / downsideStdDev) : 0;
+            
+            // 盈利因子 (Profit Factor) - 总盈利 / 总亏损的绝对值
+            const totalProfitAmount = trades.filter(t => t > 0).reduce((sum, t) => sum + t, 0);
+            const totalLossAmount = Math.abs(trades.filter(t => t < 0).reduce((sum, t) => sum + t, 0));
+            const profitFactor = totalLossAmount !== 0 ? (totalProfitAmount / totalLossAmount) : 0;
+            
+            // 恢复因子 (Recovery Factor) - 净利润 / 最大回撤
+            const recoveryFactor = maxDrawdown !== 0 ? (netProfit / maxDrawdown) : 0;
 
             return {
                 total,
@@ -759,7 +994,15 @@
                 maxLossStreak,
                 currentStreak,
                 avgWinStreak,
-                avgLossStreak
+                avgLossStreak,
+                // 新增指标
+                maxDrawdown,
+                maxDrawdownPercent,
+                sortino,
+                profitFactor,
+                totalProfitAmount,
+                totalLossAmount,
+                recoveryFactor
             };
         }
 
@@ -800,6 +1043,15 @@
             document.getElementById('statCurrentStreak').textContent = stats.currentStreak + ' 次';
             document.getElementById('statAvgWinStreak').textContent = stats.avgWinStreak.toFixed(1) + ' 次';
             document.getElementById('statAvgLossStreak').textContent = stats.avgLossStreak.toFixed(1) + ' 次';
+            
+            // 更新风险指标
+            document.getElementById('statMaxDrawdown').textContent = formatCurrency(stats.maxDrawdown);
+            document.getElementById('statMaxDrawdownPercent').textContent = stats.maxDrawdownPercent.toFixed(2) + '%';
+            document.getElementById('statSortino').textContent = stats.sortino.toFixed(3);
+            document.getElementById('statProfitFactor').textContent = stats.profitFactor.toFixed(2);
+            document.getElementById('statRecoveryFactor').textContent = stats.recoveryFactor.toFixed(2);
+            document.getElementById('statTotalProfitAmount').textContent = formatCurrency(stats.totalProfitAmount);
+            document.getElementById('statTotalLossAmount').textContent = formatCurrency(stats.totalLossAmount);
 
             // 更新数据列表
             updateDataList(trades);
@@ -1098,6 +1350,18 @@
             <tr><td>当前连续状态</td><td>${stats.currentStreak} 次</td></tr>
             <tr><td>平均连续盈利</td><td>${stats.avgWinStreak.toFixed(1)} 次</td></tr>
             <tr><td>平均连续亏损</td><td>${stats.avgLossStreak.toFixed(1)} 次</td></tr>
+        </table>
+        
+        <h2>⚠️ 风险指标</h2>
+        <table>
+            <tr><th>指标</th><th>数值</th></tr>
+            <tr><td>最大回撤</td><td class="loss">¥${stats.maxDrawdown.toLocaleString('zh-CN', {minimumFractionDigits: 2})}</td></tr>
+            <tr><td>最大回撤率</td><td>${stats.maxDrawdownPercent.toFixed(2)}%</td></tr>
+            <tr><td>索提诺比率</td><td>${stats.sortino.toFixed(3)}</td></tr>
+            <tr><td>盈利因子</td><td>${stats.profitFactor.toFixed(2)}</td></tr>
+            <tr><td>恢复因子</td><td>${stats.recoveryFactor.toFixed(2)}</td></tr>
+            <tr><td>总盈利金额</td><td class="profit">¥${stats.totalProfitAmount.toLocaleString('zh-CN', {minimumFractionDigits: 2})}</td></tr>
+            <tr><td>总亏损金额</td><td class="loss">¥${stats.totalLossAmount.toLocaleString('zh-CN', {minimumFractionDigits: 2})}</td></tr>
         </table>
         
         <h2>💰 详细数据</h2>
